@@ -12,3 +12,10 @@ def readu16(file):
 def printHex(name, offset):
     print(name, ":" , offset, "0x{0:x}".format(offset))
 
+def fromPsColor(color, useAlpha = True):
+    r = int((color & 31) << 3)
+    g = int((color >> 5 & 31) << 3)
+    b = int((color >> 10 & 31) << 3)
+    a = (int(color >> 15 & 1) * 255 if useAlpha else 0)
+    return (r,g,b,a)
+
