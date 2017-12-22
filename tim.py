@@ -23,7 +23,7 @@ class _BitPerPixel:
     def __str__(self):
         return "{name}: {{id: {id}, bpp: {bpp}, colorPaletSize: {colorPaletSize}}}".format(name=type(self).__name__, **vars(self))
 
-def bitsPerPixel(id):
+def _bitsPerPixel(id):
     return {
         0: _BitPerPixel(0, 4, 16),
         1: _BitPerPixel(1, 8, 256),
@@ -33,19 +33,64 @@ def bitsPerPixel(id):
 
 class TimFile:
 
-    def __init__(self, bpp, palette, data):
+    def __init__(self, bpp, palette, image):
         self.bpp = bpp
         self.palette = palette
-        self.data = data
+        self.image = image
 
-def readChunk(file):
+    def getPaletteImage(self):
+        width, height = 256, 256
+
+        image = Image.new("P", (width, height), 0)
+        image.putpalette(self.palette)
+        d = ImageDraw.ImageDraw(image)
+        for x in range(width):
+            for y in range(height):
+                color = int(x / 16) * 16 + int(y / 16)
+                d.point((x,y), fill=color)
+
+        return image.convert("RGB")
+
+
+def _readChunk(file):
     size = readu32(file)
     x,y,w,h = readu16(file),readu16(file),readu16(file),readu16(file)
     data = file.read(size - CHUNK_HEADER_SIZE)
-    return x,y,w,h
+    return x,y,w,h, data
 
-def readImage(file):
-    print("==== TIM Header ====")
+def _readPalette(file, bpp):
+    palX, palY, palW, palH, palData = _readChunk(file)
+
+    palette = []
+    for i in range(bpp.colorPaletSize):
+        r,g,b,a = fromPsColor((palData[i*2+1] << 8) + palData[i*2])
+        palette.append(r)
+        palette.append(g)
+        palette.append(b)
+    return palette
+
+def _readImage(file, bpp, palette):
+    imgX, imgY, imgW, imgH, imgData = _readChunk(file)
+
+    if (bpp.id == 0):
+        imgW *= 4
+    if (bpp.id == 1):
+        imgW *= 2;
+
+    image = Image.new("P", (imgW, imgH), 0)
+    image.putpalette(palette)
+    d = ImageDraw.ImageDraw(image)
+    i = 0;
+    for y in range(imgH):
+        for x in range(imgW):
+            color = imgData[i]
+            d.point((x,y), fill=color)
+            i = i + 1
+
+    return image.convert("RGB")
+
+
+def readTim(file):
     marker = readu32(file);
     if marker != 0x10:
         raise ValueError("unkown tim marker, should be 0x10, but is 0x{0:x}".format(marker))
@@ -58,64 +103,15 @@ def readImage(file):
                mit Size-Header vorne dran, um den ganzen Chunk einzulesen und/oder zu
                überspringen. Die Flags sind aber nicht Bestandteil eines Chunks. 
     """
-    bpp = bitsPerPixel(flags & 3)
+    bpp = _bitsPerPixel(flags & 3)
     hasPal = (flags >> 3) & 1
-    palSize = readu32(file)
-    palX = readu16(file)
-    palY = readu16(file)
-    palW = readu16(file)
-    palH = readu16(file)
 
-    print("flags:", flags, "{0:b}b".format(flags), "bpp:", bpp, "hasPal:", hasPal)
-    printHex("palSize:", palSize)
-    printHex("palX:", palX)
-    printHex("palY:", palY)
-    printHex("palW:", palW)
-    printHex("palH:", palH)
+    palette = _readPalette(file, bpp)
+    image = _readImage(file, bpp, palette)
 
-    palette = []
-    for i in range(bpp.colorPaletSize):
-        r,g,b,a = fromPsColor(readu16(file))
-        palette.append(r)
-        palette.append(g)
-        palette.append(b)
+    return TimFile(bpp, palette, image)
 
-    width, height = 256, 256
 
-    image = Image.new("P", (width, height), 0)
-    image.putpalette(palette)
-    d = ImageDraw.ImageDraw(image)
-    for x in range(width):
-        for y in range(height):
-            color = int(x / 16) * 16 + int(y / 16)
-            d.point((x,y), fill=color)
 
-    image.convert("RGB").save("palette.jpg")
 
-    printHex("tell:", file.tell())
 
-    imgSize = readu32(file)
-    imgX = readu16(file)
-    imgY = readu16(file)
-    imgW = readu16(file)
-    imgH = readu16(file)
-    printHex("imgSize:", imgSize)
-    printHex("imgX:", imgX)
-    printHex("imgY:", imgY)
-    printHex("imgW:", imgW)
-    printHex("imgH:", imgH)
-
-    if (bpp.id == 0):
-        imgW *= 4
-    if (bpp.id == 1):
-        imgW *= 2;
-
-    image = Image.new("P", (imgW, imgH), 0)
-    image.putpalette(palette)
-    d = ImageDraw.ImageDraw(image)
-    for y in range(imgH):
-        for x in range(imgW):
-            color = file.read(1)[0]
-            d.point((x,y), fill=color)
-
-    return image.convert("RGB")
