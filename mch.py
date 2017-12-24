@@ -112,9 +112,7 @@ def readList4(mchFile, modelOffset, numEntries):
         # entweder 0, 1 oder 2
         value13 = readu16(mchFile)
         # 4 x immer 0x0
-        zeroes = []
-        for j in range(4):
-            zeroes.append(readu16(mchFile))
+        zeroes = readlist(readu16,mchFile, 4)
         #print("{0}: 0x{1:x} 0x{2:x} 0x{3:x} 0x{4:x}".format(i+1, value1, value2, value3, value4))
         # print("{0}: 0x{1:x} 0x{2:x} 0x{3:x} 0x{4:x} 0x{6:x} 0x{6:x} 0x{7:x} 0x{8:x}".format(i+1, value5, value6, value7, value8, value9, value10, value11, value12))
         # print("{0}: 0x{1:x} 0x{2:x} 0x{3:x} 0x{4:x}".format(i+1, const1, const2, const3, const4))
@@ -122,17 +120,41 @@ def readList4(mchFile, modelOffset, numEntries):
         # print("{0}, {1}, {2}, {3}, {4}, {5}".format(zero1, value13, *zeroes))
 
 def readList5(mchFile, modelOffset, numEntries):
+    """
+        this list contains only one entry in all encountered models 
+    """
     print("entries5 - size: 32 bytes -", numEntries,"entries")
     printHex("tell", mchFile.tell())
     printHex("tell", mchFile.tell() - modelOffset)
+    
+    # sparse data, only entry 1, 9 & 11 (zero based) contains data
+    for i in range(numEntries):
+        stuff = readlist(readu16,mchFile, 16)
+        # printHexListMultiLine(str(i+1)+" stuff", stuff)
 
 def readList6(mchFile, modelOffset, numEntries):
-    print("entries6 - size: 32 bytes -", numEntries,"entries")
+    """
+        word - Description
+          0  - start index: index into vertex array. beginning from 0
+          1  - length: this value plus the start index is the next rows start index
+          2  - unknown: some small value. max encountered value is 0x3a, never zero
+          3  - zero: always zero
+
+        this is maybe some kind of polygon span 
+    """
+    print("entries6 - size: 8 bytes -", numEntries, "entries")
     printHex("tell", mchFile.tell())
     printHex("tell", mchFile.tell() - modelOffset)
 
+    for i in range(numEntries):
+        stuff = readlist(readu16,mchFile, 4)
+#        printHexListOneLine(str(i+1)+" stuff", stuff)
+
 def readList7(mchFile, modelOffset, numEntries):
-    print("entries7 - size: 32 bytes -", numEntries,"entries")
+    """
+        unknown. never encountered entries in this list.
+    """
+    print("entries7 - size: ?? bytes -", numEntries,"entries")
     printHex("tell", mchFile.tell())
     printHex("tell", mchFile.tell() - modelOffset)
 
@@ -143,7 +165,6 @@ def main():
     fileName = sys.argv[1]
     print(fileName)
     length = os.stat(basePath + fileName).st_size
-    printHex("file length", length)
     with open(basePath + fileName, "rb") as mchFile:
         offsets = readHeader(mchFile)
 
@@ -163,10 +184,11 @@ def main():
 
         listoffsets = readlist(readu32, mchFile, 7)
         printHexListMultiLine("listoffsets", listoffsets)
+        printHex("file length", length)
 
         stuff = []
-        for s in range(1):
-            value = readu32(mchFile)
+        for s in range(2):
+            value = readu16(mchFile)
             stuff.append(value)
             printHex(str(s+1), value)
 
@@ -177,6 +199,11 @@ def main():
         readList5(mchFile, modelOffset, numEntries[4])
         readList6(mchFile, modelOffset, numEntries[5])
         readList7(mchFile, modelOffset, numEntries[6])
+
+        print("end of file")
+        printHex("tell", mchFile.tell())
+        printHex("remaining", length - mchFile.tell())
+
 
 
 

@@ -30,12 +30,15 @@ def readu8(file):
 def printHex(name, number):
     print(name, ":" , number, "0x{0:x}".format(number))
 
-def printHexListOneLine(name, offset):
-    pass
+def printHexListOneLine(name, numbers):
+    s = "";
+    for number in numbers:
+        s += "{0} 0x{1:x}, ".format(number, number)
+    print(name, ":", s)
 
-def printHexListMultiLine(name, offsetList):
-    for index in range(len(offsetList)):
-        printHex(name+str(index+1), offsetList[index])
+def printHexListMultiLine(name, numbers):
+    for index in range(len(numbers)):
+        printHex(name+str(index+1), numbers[index])
 
 
 def fromPsColor(color, useAlpha = True):
