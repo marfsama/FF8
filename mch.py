@@ -43,7 +43,7 @@ def main():
     fileName = sys.argv[1]
     print(fileName)
     length = os.stat(basePath + fileName).st_size
-    print("file length:", length)
+    printHex("file length", length)
     with open(basePath + fileName, "rb") as mchFile:
         offsets = readHeader(mchFile)
 
@@ -58,16 +58,16 @@ def main():
         numEntries2 = readu32(mchFile)
         numEntries3 = readu32(mchFile)
         numEntries4 = readu32(mchFile)
+        numEntries5 = readu32(mchFile)
+        numEntries6 = readu32(mchFile)
+        numEntries7 = readu32(mchFile)
         printHex("numEntries1", numEntries1)
         printHex("numEntries2", numEntries2)
         printHex("numEntries3", numEntries3)
         printHex("numEntries4", numEntries4)
-        # skip unknown stuff
-        stuff = []
-        for s in range(3):
-            value = readu32(mchFile)
-            stuff.append(value)
-            printHex(str(s+1), value)
+        printHex("numEntries5", numEntries5)
+        printHex("numEntries6", numEntries6)
+        printHex("numEntries7", numEntries7)
 
         temp1 = readu16(mchFile)
         temp2 = readu16(mchFile)
@@ -79,12 +79,18 @@ def main():
         listoffset2 = readu32(mchFile)
         listoffset3 = readu32(mchFile)
         listoffset4 = readu32(mchFile)
-        printHex("9 listoffset1", listoffset1)
-        printHex("10 listoffset2", listoffset2)
-        printHex("11 listoffset3", listoffset3)
-        printHex("11 listoffset4", listoffset4)
-        otherOffsets = []
-        for s in range(4):
+        listoffset5 = readu32(mchFile)
+        listoffset6 = readu32(mchFile)
+        listoffset7 = readu32(mchFile)
+        printHex("listoffset1", listoffset1)
+        printHex("listoffset2", listoffset2)
+        printHex("listoffset3", listoffset3)
+        printHex("listoffset4", listoffset4)
+        printHex("listoffset5", listoffset5)
+        printHex("listoffset6", listoffset6)
+        printHex("listoffset7", listoffset7)
+        stuff = []
+        for s in range(1):
             value = readu32(mchFile)
             stuff.append(value)
             printHex(str(s+1), value)
@@ -128,11 +134,15 @@ def main():
         printHex("tell", mchFile.tell())
         printHex("tell", mchFile.tell() - modelOffset)
         for i in range(numEntries4):
+            # entweder 0x607 oder 0x709. Bitfield?
             value1 = readu16(mchFile)
+            # entweder 0x2501 oder 0x2d01
             value2 = readu16(mchFile)
+            # konstant 0x44
             value3 = readu32(mchFile)
+            # konstant 0x01
             value4 = readu32(mchFile)
-            # index into vertex array            
+            # 8 x index into vertex array
             value5 = readu16(mchFile)
             value6 = readu16(mchFile)
             value7 = readu16(mchFile)
@@ -141,14 +151,34 @@ def main():
             value10 = readu16(mchFile)
             value11 = readu16(mchFile)
             value12 = readu16(mchFile)
-            skip = []
-            for j in range(9):
-                skip.append("0x{0:x}".format(readu32(mchFile)))
-            # print("{0}: 0x{1:x} 0x{2:x} 0x{3:x} 0x{4:x}".format(i+1, value1, value2, value3, value4))
-            #print("{0}: 0x{1:x} 0x{2:x} 0x{3:x} 0x{4:x} 0x{6:x} 0x{6:x} 0x{7:x} 0x{8:x}".format(i+1, value5, value6, value7, value8, value9, value10, value11, value12))
-            print("{0}: {1}".format(i+1, skip)) 
+            # 4 x konstant 0x7f7f7f7f oder 0xffffffff
+            const1 = readu32(mchFile)
+            const2 = readu32(mchFile)
+            const3 = readu32(mchFile)
+            const4 = readu32(mchFile)
+            # 8x releativ kleine byte-zahlen. meistens ist das 7. Bit (LSB) nicht gesetzt.
+            # könnten das bone weights sein?
+            valuebytes = mchFile.read(8);
+            # immer 0x0
+            zero1 = readu16(mchFile)
+            # entweder 0, 1 oder 2
+            value13 = readu16(mchFile)
+            # 4 x immer 0x0
+            zeroes = []
+            for j in range(4):
+                zeroes.append(readu16(mchFile))
+            #print("{0}: 0x{1:x} 0x{2:x} 0x{3:x} 0x{4:x}".format(i+1, value1, value2, value3, value4))
+            # print("{0}: 0x{1:x} 0x{2:x} 0x{3:x} 0x{4:x} 0x{6:x} 0x{6:x} 0x{7:x} 0x{8:x}".format(i+1, value5, value6, value7, value8, value9, value10, value11, value12))
+            # print("{0}: 0x{1:x} 0x{2:x} 0x{3:x} 0x{4:x}".format(i+1, const1, const2, const3, const4))
+            # print("{0:2x} {1:2x} {2:2x} {3:2x} {4:2x} {5:2x} {6:2x} {7:2x}".format(*valuebytes))
+            # print("{0}, {1}, {2}, {3}, {4}, {5}".format(zero1, value13, *zeroes))
 
-        print("entries5 - size: ? bytes -", 1,"entries")
+        print("entries5 - size: 32 bytes -", numEntries5,"entries")
+        printHex("tell", mchFile.tell())
+        printHex("tell", mchFile.tell() - modelOffset)
+
+
+        print("entries6 - size: ?? bytes -", numEntries6,"entries")
         printHex("tell", mchFile.tell())
         printHex("tell", mchFile.tell() - modelOffset)
 main()
