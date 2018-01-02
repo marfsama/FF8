@@ -36,12 +36,15 @@ def findModelOffset(offsets):
             found = True
     return -1
 
+def outputVertices(objFile, model):
+    for vertex in model.vertices:
+        objFile.write("v {0} {1} {2}\n".format(vertex.x, vertex.y, vertex.z))
+    objFile.write("\n")
 
-
-
-
-
-
+def outputFaces(objFile, model):
+    faceSpan = model.faceSpans[0]
+    objFile.write("f {0} {1} {2}\n".format(faceSpan.startIndex+1, faceSpan.startIndex+2, faceSpan.startIndex+3))
+     
 
 
 def main():
@@ -57,13 +60,21 @@ def main():
         mchFile.seek(modelOffset)
         printHex("tell", mchFile.tell())
 
-        readModel(mchFile)
+        model = readModel(mchFile)
+        print(str(model))
+        print(str(model.vertices[0]))
+
+        for span in model.faceSpans:
+            print(str(span))
 
         print("end of file")
         printHex("tell", mchFile.tell())
         printHex("remaining", length - mchFile.tell())
 
-
+        with open("out.obj", "w") as out:
+            out.write("g default\n\n")
+            outputVertices(out, model)
+            outputFaces(out, model)
 
 
 main()

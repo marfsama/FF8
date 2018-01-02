@@ -1,7 +1,8 @@
 from tools import *
 
 class Model:
-    pass    
+    def __str__(self):
+        return "Model with\n\t{0} vertices".format(len(self.vertices))
 
 class FaceData:
     def __init__(self, mchFile):
@@ -10,8 +11,8 @@ class FaceData:
             Indizierung dieses Arrays. Könnte das ein "Next" Pointer oder so sein?
             Oder wird damit ein Triangle Strip gebildet und eine negative Zahl gibt das 
             Ende an? Eher unwahrscheinlich, da die indizes nicht alle Vertices abgraben
-            könnte hiermit ein skelet angegeben werden? DAnn ist das ein prev. Pointer und
-            value 3 ein drehwert und/oder ein anderer constraint33 Zahl 
+            Könnte hiermit ein skelet angegeben werden? DAnn ist das ein prev. Pointer und
+            value 3 ein drehwert und/oder ein anderer constraint Zahl 
         """
         self.value1 = readu16(mchFile)
         # immer 0x40 * value1
@@ -27,11 +28,34 @@ class FaceData:
         return "Face: 0x{0:x}, 0x{1:x}, {2}, {3}, {4}".format(self.value1, self.value2, self.zero, self.value3, self.unknown)
 
 class Vertex:
-    def __init__(self, mchFile):
-        self.values = readlist(read16, mchFile, 4)
+    def __init__(self, values):
+        self.x = values[0]
+        self.y = values[1]
+        self.z = values[2]
+        self.w = values[3]
 
     def __str__(self):
-        return "Vertex: {0}".format(self.values)
+        return "Vertex: x: {0} y: {1} z: {2} w: {3}".format(self.x, self.y, self.z, self.w)
+
+class FaceSpan:
+    """
+        word - Description
+          0  - start index: index into vertex array (list2). beginning from 0
+          1  - length: this value plus the start index is the next rows start index
+          2  - unknown: some small value. max encountered value is 0x3a, never zero. maybe some kind of flags?
+          3  - zero: always zero
+
+        this is maybe some kind of polygon span 
+    """
+    def __init__(self, values):
+        self.startIndex = values[0]
+        self.length = values[1]
+        self.unknown = values[2]
+        self.zero = values[3]
+
+    def __str__(self):
+        return "FaceSpan: startIndex: {0} length: {1} unknown {2}".format(self.startIndex, self.length, self.unknown)
+
 
 def readList1(mchFile, modelOffset, numEntries):
     print("entries1 - size: 64 bytes -", numEntries, "entries - face data?")
@@ -51,8 +75,9 @@ def readVertices(mchFile, modelOffset, numEntries):
 
     vertices = []
     for i in range(numEntries):
-        vertex = Vertex(mchFile)
-        vertices.append(vertex)
+        values = readlist(read16, mchFile, 4)
+        vertices.append(Vertex(values))
+    return vertices
 
 
 def readList3(mchFile, modelOffset, numEntries):
@@ -121,7 +146,7 @@ def readList5(mchFile, modelOffset, numEntries):
         stuff = readlist(readu16,mchFile, 16)
         # printHexListMultiLine(str(i+1)+" stuff", stuff)
 
-def readList6(mchFile, modelOffset, numEntries):
+def readFaceSpans(mchFile, modelOffset, numEntries):
     """
         word - Description
           0  - start index: index into vertex array (list2). beginning from 0
@@ -135,9 +160,11 @@ def readList6(mchFile, modelOffset, numEntries):
     printHex("tell", mchFile.tell())
     printHex("tell", mchFile.tell() - modelOffset)
 
+    faceSpans = []
     for i in range(numEntries):
-        stuff = readlist(readu16,mchFile, 4)
-        # printHexListOneLine(str(i+1)+" stuff", stuff)
+        values = readlist(readu16,mchFile, 4)
+        faceSpans.append(FaceSpan(values))
+    return faceSpans
 
 def readList7(mchFile, modelOffset, numEntries):
     """
@@ -148,7 +175,7 @@ def readList7(mchFile, modelOffset, numEntries):
     printHex("tell", mchFile.tell() - modelOffset)
 
 def readModel(mchFile):
-    model = Model
+    model = Model()
     model.modelOffset = mchFile.tell();
     model.numEntries = readlist(readu32, mchFile, 7)
     printHexListMultiLine("numEntries", model.numEntries)
@@ -168,11 +195,12 @@ def readModel(mchFile):
         printHex(str(s+1), value)
 
     readList1(mchFile, model.modelOffset, model.numEntries[0])
-    readVertices(mchFile, model.modelOffset, model.numEntries[1])
+    model.vertices = readVertices(mchFile, model.modelOffset, model.numEntries[1])
     readList3(mchFile, model.modelOffset, model.numEntries[2])
     readList4(mchFile, model.modelOffset, model.numEntries[3])
     readList5(mchFile, model.modelOffset, model.numEntries[4])
-    readList6(mchFile, model.modelOffset, model.numEntries[5])
+    model.faceSpans = readFaceSpans(mchFile, model.modelOffset, model.numEntries[5])
     readList7(mchFile, model.modelOffset, model.numEntries[6])
 
+    return model
 
