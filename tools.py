@@ -11,6 +11,10 @@ def readu32(file):
     data = file.read(4);
     return struct.unpack("I", data)[0]
 
+def read32(file):
+    data = file.read(4);
+    return struct.unpack("i", data)[0]
+
 def readfloat(file):
     data = file.read(4);
     return struct.unpack("f", data)[0]
