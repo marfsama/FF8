@@ -54,7 +54,7 @@ class FaceSpan:
         self.zero = values[3]
 
     def __str__(self):
-        return "FaceSpan: startIndex: {0} length: {1} unknown {2}".format(self.startIndex, self.length, self.unknown)
+        return "FaceSpan: startIndex: {0} length: {1} unknown {2:b}".format(self.startIndex, self.length, self.unknown)
 
 
 def readList1(mchFile, modelOffset, numEntries):
