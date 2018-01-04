@@ -1,4 +1,6 @@
 __pycache__
 *.jpg
 model
+battle
+main_chr
 *.obj

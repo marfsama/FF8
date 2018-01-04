@@ -9,7 +9,7 @@ import os
 import sys
 
 
-basePath = "/home/marf/project/ff8/x/main_chr/"
+basePath = "main_chr/"
 
 
 def readHeader(file):
@@ -21,9 +21,9 @@ def readHeader(file):
     """ die ZAhl im oberen word des offsets könnte die Textur-Nummer oder texture unit sein.
     """
 
-    print("==== File Header ====")
-    for offset in offsets:
-        printHex("offset", offset)
+#    print("==== File Header ====")
+#    for offset in offsets:
+#        printHex("offset", offset)
 
     return offsets
 
@@ -37,30 +37,41 @@ def findModelOffset(offsets):
     return -1
 
 
-def outputVertex(objFile, vertex, faceIndex):
-        objFile.write("v {0} {1} {2}\n".format(vertex.x, vertex.y, vertex.z))
-        objFile.write("v {0} {1} {2}\n".format(vertex.x+1, vertex.y, vertex.z))
-        objFile.write("v {0} {1} {2}\n".format(vertex.x, vertex.y+1, vertex.z))
-        objFile.write("f {0} {1} {2}\n".format(faceIndex, faceIndex+1, faceIndex+2))
+def statisticsList1(model):
+    minValue = 1000
+    maxValue = -1000
+    for index, face in enumerate(model.faces):
+        print(index, ":", str(face))
+        minValue = min(minValue, face.value3)
+        maxValue = max(maxValue, face.value3)
 
-def outputVertexCloud(objFile, model):
-    faceIndex = 1
-    for vertex in model.vertices:
-        outputVertex(objFile, vertex, faceIndex)
-        faceIndex += 3
+    print("value3: ", minValue, maxValue)
 
-def outputFaceSpan(objFile, model, faceSpan):
-    faceIndex = 1
-    for vertexIndex in range(faceSpan.length):
-        vertex = model.vertices[ faceSpan.startIndex+vertexIndex ]
-        outputVertex(objFile, vertex, faceIndex)
-        faceIndex += 3
+def statisticsVertexList(model):
+    minX, maxX = 1000, -1000
+    minY, maxY = 1000, -1000
+    minZ, maxZ = 1000, -1000
 
-#    objFile.write("l ")
-#    for vertexIndex in range(faceSpan.length):
-#        objFile.write("\n")
-#    objFile.write("\n")
+    for index, vertex in enumerate(model.vertices):
+        print(index, ":", str(vertex))
+        minX = min(minX, vertex.x)
+        minY = min(minY, vertex.y)
+        minZ = min(minZ, vertex.z)
+        maxX = max(maxX, vertex.x)
+        maxY = max(maxY, vertex.y)
+        maxZ = max(maxZ, vertex.z)
+    print("x: ", minX, maxX)
+    print("y: ", minY, maxY)
+    print("z: ", minZ, maxZ)
 
+def statisticsList3(model):
+    minValue, maxValue, sumValue = 1000, -1000, 0
+    for index, entry in enumerate(model.entries3):
+        print("{0:3}: dec: {1:3} hex: {1:3x} bin: {1:8b}".format(index, entry))
+        minValue = min(minValue, entry)
+        maxValue = max(maxValue, entry)
+        sumValue += entry
+    print("    value min:",minValue," max:", maxValue,"sum:",sumValue)
 
 
 def main():
@@ -74,23 +85,16 @@ def main():
         print("==== Model Daten ====")
         modelOffset = findModelOffset(offsets)
         mchFile.seek(modelOffset)
-        printHex("tell", mchFile.tell())
 
         model = readModel(mchFile)
-        print(str(model))
-        print(str(model.vertices[0]))
-
-        for span in model.faceSpans:
-            print(str(span))
 
         print("end of file")
         printHex("tell", mchFile.tell())
         printHex("remaining", length - mchFile.tell())
 
-        with open("out.obj", "w") as out:
-            out.write("g default\n\n")
-            outputFaceSpan(out, model, model.faceSpans[0])
 
+        for index, entry in enumerate(model.entries4):
+            pass
 
 main()
 
