@@ -23,3 +23,7 @@ Read Battle Model. WIP.
 * https://github.com/MaKiPL/FF8-Rinoa-s-Toolset
 * https://github.com/cospi/wmx2obj
 * https://github.com/myst6re/deling
+* https://github.com/JeMaCheHi/Cactilio - FFVIII Battle Structure Editor
+* https://github.com/Albeoris/Esthar - Final Fantasy VIII resource editor.
+
+
