@@ -112,6 +112,8 @@ def readTim(file):
     return TimFile(bpp, palette, image)
 
 
-
+def readTimFile(fileName):
+    with open(fileName, "rb") as file:
+        return readTim(file)
 
 
