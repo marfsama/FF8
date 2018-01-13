@@ -4,3 +4,4 @@ model
 battle
 main_chr
 *.obj
+*.mtl

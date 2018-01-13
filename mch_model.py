@@ -38,7 +38,7 @@ class Vertex:
         self.w = read16(mchFile)
 
         if self.w != 0:
-            raise ValueError("w sould always be 0. actual: "+str(self.w))
+            raise ValueError("w should always be 0. actual: "+str(self.w))
 
     def __str__(self):
         return "Vertex: x: {0} y: {1} z: {2} w: {3}".format(self.x, self.y, self.z, self.w)
@@ -197,6 +197,7 @@ def readModel(mchFile):
     printHex("numQuads", model.numQuads)
 
     listoffsets = readlist(readu32, mchFile, 7)
+    
 
     model.temp3 = readu16(mchFile)
     model.temp4 = readu16(mchFile)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 from tools import *
+from export import *
+
 import os
 import sys
 
@@ -128,11 +130,32 @@ def readTextures(file, textureListOffset):
     file.seek(textureListOffset)
 
     numTextures = readu32(file)
-    print("numTextures:", numTextures)
+
+    textures = {}
 
     textureOffsets = readlist(readu32, file, numTextures)
+    for index, relativeoffset in enumerate(textureOffsets):
+        absoluteOffset = textureListOffset + relativeoffset
+        file.seek(absoluteOffset)
+        tim = readTim(file)
 
-    print("texture offsets:", textureOffsets)
+        textures[index] = tim.image
+
+    return textures
+
+def readAnimations(file, animationSectionOffset):
+    file.seek(animationSectionOffset)
+
+    numAnimations = readu32(file)
+    animationOffsets = readlist(readu32, file, numAnimations)
+
+    print("{0} animations: {1}".format(numAnimations, animationOffsets))
+
+    for index, relativeoffset in enumerate(animationOffsets):
+        absoluteOffset = animationSectionOffset + relativeoffset
+        file.seek(absoluteOffset)
+        values = readlist(readu32, file, 10)
+        print(index, toHex(values))
 
 
 def main():
@@ -152,11 +175,13 @@ def main():
 
         print("tell: 0x{0:x}".format(file.tell()))
 
-#        readBones(file, offsets.getOffset("Skeleton"))
-#        readMeshes(file, offsets.getOffset("Geometry"))
-        readTextures(file, offsets.getOffset("Texture"))
+        bones = readBones(file, offsets.getOffset("Skeleton"))
+#        meshes = readMeshes(file, offsets.getOffset("Geometry"))
+#        textures = readTextures(file, offsets.getOffset("Texture"))
+
+        readAnimations(file, offsets.getOffset("Animation"))
         print("tell: 0x{0:x}".format(file.tell()))
-            
+
 
         print("file length: 0x{0:x}".format(length))
         print("last entry: 0x{0:x}".format(offsets.getOffset("FileLength")))
