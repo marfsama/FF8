@@ -1,0 +1,5 @@
+pyglet
+PyOpenGL
+pyshaders
+pyglbuffers
+pillow

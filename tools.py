@@ -85,9 +85,12 @@ class Offsets:
     def __init__(self, offsetNames):
         self.offsetNames = offsetNames
         self.offsets = {}
+        self.sizes = {}
 
 
-    def setOffsets(self, offsets):
+    def setOffsets(self, offsets, totalSize = 0):
+        lastName = None
+        lastOffset = 0        
         for index, offsetName in enumerate(self.offsetNames):
             self.offsets[offsetName] = offsets[index]
 

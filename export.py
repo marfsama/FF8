@@ -99,6 +99,8 @@ class VertexImage:
         IMAGE_SIZE = 512
         xscale = self.minMaxX.max - self.minMaxX.min
         yscale = self.minMaxY.max - self.minMaxY.min
+        if xscale == 0 or yscale == 0:
+            return
         image = Image.new("RGB", (IMAGE_SIZE, IMAGE_SIZE))
         d = ImageDraw.ImageDraw(image)
 

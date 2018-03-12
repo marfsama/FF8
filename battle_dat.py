@@ -175,7 +175,7 @@ def main():
 
         print("tell: 0x{0:x}".format(file.tell()))
 
-        bones = readBones(file, offsets.getOffset("Skeleton"))
+#        bones = readBones(file, offsets.getOffset("Skeleton"))
 #        meshes = readMeshes(file, offsets.getOffset("Geometry"))
 #        textures = readTextures(file, offsets.getOffset("Texture"))
 

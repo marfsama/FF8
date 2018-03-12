@@ -36,6 +36,7 @@ class Vertex:
         self.y = read16(mchFile)
         self.z = read16(mchFile)
         self.w = read16(mchFile)
+        self.boneId = None
 
         if self.w != 0:
             raise ValueError("w should always be 0. actual: "+str(self.w))
@@ -47,7 +48,8 @@ class Limb:
     def __init__(self, values):
         self.startVertexId = values[0]
         self.numVertices = values[1]
-        self.boneId = values[2]
+        # bone ids are stored 1-based
+        self.boneId = values[2]-1
         self.zero = values[3]
 
     def __str__(self):
@@ -59,13 +61,6 @@ class TextureCoord:
         return self.__str__()
     def __str__(self):
         return "{0:.2f}/{1:.2f}".format(self.u, self.v)
-
-def readUV(mchFile):
-    coord = TextureCoord()
-    coord.u = read8(mchFile) / 127.0
-    coord.v = read8(mchFile) / 127.0
-    return coord
-
 
 class Face:
     def __init__(self, mchFile):
@@ -88,7 +83,6 @@ class Face:
         self.const2 = readu32(mchFile)
         self.const3 = readu32(mchFile)
         self.const4 = readu32(mchFile)
-        # 8x releativ kleine byte-zahlen. meistens ist das 7. Bit (LSB) nicht gesetzt.
         # uv koordinaten
         self.textureCoords = readlist(readUV,mchFile, 4);
         # immer 0x0
@@ -115,6 +109,13 @@ class Face:
             raise ValueError("const3 must be 0x7f7f7f. actual: {0:x}".format(self.const3))
         if self.const4 != 0x7f7f7f and self.const4 != 0xffffff and self.const4 != 0:
             raise ValueError("const4 must be 0x7f7f7f. actual: {0:x}".format(self.const4))
+
+def readUV(mchFile):
+    coord = TextureCoord()
+    coord.u = read8(mchFile) / 127.0
+    coord.v = read8(mchFile) / 127.0
+    return coord
+
 
 def readBones(mchFile, modelOffset, numEntries):
     print("entries1 - size: 64 bytes -", numEntries, "entries - bones")
@@ -186,6 +187,14 @@ def readList7(mchFile, modelOffset, numEntries):
     """
     print("entries7 - size: ?? bytes -", numEntries,"entries")
 
+def assignBonesToVertices(model):
+    for limb in model.limbs:
+        for relativeVertexId in range(limb.numVertices):
+            vertexId = limb.startVertexId + relativeVertexId
+            vertex = model.vertices[vertexId]
+            vertex.boneId = limb.boneId
+
+
 def readModel(mchFile):
     model = Model()
     model.modelOffset = mchFile.tell();
@@ -211,6 +220,8 @@ def readModel(mchFile):
     model.entries5 = readList5(mchFile, model.modelOffset, model.numEntries[4])
     model.limbs = readLimbs(mchFile, model.modelOffset, model.numEntries[5])
     readList7(mchFile, model.modelOffset, model.numEntries[6])
+
+    assignBonesToVertices(model)
 
     return model
 
